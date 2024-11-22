@@ -18,7 +18,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     try:
         current_count = context.chat_data.get('count', 0)
-        number = int(message.text.strip().translate('', '', string.punctuation))
+        number = int(message.text.strip().translate(str.maketrans('', '', string.punctuation)))
 
         if number == current_count + 1:
             context.chat_data['count'] = number
