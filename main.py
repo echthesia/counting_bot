@@ -23,16 +23,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.chat_data['count'] = number
         else:
             context.chat_data['count'] = 0
-            await message.delete()
             await message.reply_text(f"Incorrect! The next number was {current_count + 1}. Count reset.")
     except ValueError:
         context.chat_data['count'] = 0
-        await message.delete()
         await message.reply_text(f"'{message.text}' ∉ **N**. Count reset.", parse_mode=constants.ParseMode.MARKDOWN_V2)
 
 async def handle_non_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.chat_data['count'] = 0
-    await update.message.delete()
     await update.message.reply_text("That's not even *text!*. Count reset.", parse_mode=constants.ParseMode.MARKDOWN_V2)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
