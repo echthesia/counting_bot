@@ -17,7 +17,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     try:
         current_count = context.chat_data.get('count', 0)
-        number = int(message.text)
+        number = int(message.text.strip())
 
         if number == current_count + 1:
             context.chat_data['count'] = number
@@ -26,11 +26,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await message.reply_text(f"Incorrect! The next number was {current_count + 1}. Count reset.")
     except ValueError:
         context.chat_data['count'] = 0
-        await message.reply_text(f"'{message.text}' ∉ **N**. Count reset.", parse_mode=constants.ParseMode.MARKDOWN_V2)
+        await message.reply_text(f"\"{message.text}\" ∉ <b>N</b>. Count reset.", parse_mode=constants.ParseMode.HTML)
 
 async def handle_non_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.chat_data['count'] = 0
-    await update.message.reply_text("That's not even *text!*. Count reset.", parse_mode=constants.ParseMode.MARKDOWN_V2)
+    await update.message.reply_text("That's not even <i>text!</i>. Count reset.", parse_mode=constants.ParseMode.HTML)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
@@ -59,7 +59,7 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("count", get_count))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    application.add_handler(MessageHandler(~filters.TEXT, handle_non_text_message))
+    application.add_handler(MessageHandler(~filters.TEXT & ~filters.StatusUpdate.ALL, handle_non_text_message))
     application.add_handler(MessageHandler(filters.StatusUpdate.MIGRATE, chat_migration))
 
     # Start the bot
