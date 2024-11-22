@@ -22,6 +22,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if number == current_count + 1:
             context.chat_data['count'] = number
+            if number == 69:
+                await message.reply_text("nice")
         else:
             context.chat_data['count'] = 0
             await message.reply_text(f"Incorrect! The next number was {current_count + 1}. Count reset.")
