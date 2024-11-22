@@ -4,6 +4,7 @@ from telegram import constants
 from telegram.ext import Application, MessageHandler, CommandHandler, ContextTypes, filters, PicklePersistence
 import dotenv
 import os
+import string
 
 # Enable logging
 logging.basicConfig(
@@ -17,7 +18,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     try:
         current_count = context.chat_data.get('count', 0)
-        number = int(message.text.strip())
+        number = int(message.text.strip().translate('', '', string.punctuation))
 
         if number == current_count + 1:
             context.chat_data['count'] = number
@@ -25,8 +26,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.chat_data['count'] = 0
             await message.reply_text(f"Incorrect! The next number was {current_count + 1}. Count reset.")
     except ValueError:
-        context.chat_data['count'] = 0
-        await message.reply_text(f"\"{message.text}\" ∉ <b>N</b>. Count reset.", parse_mode=constants.ParseMode.HTML)
+        # context.chat_data['count'] = 0
+        # await message.reply_text(f"\"{message.text}\" ∉ <b>N</b>. Count reset.", parse_mode=constants.ParseMode.HTML)
+        pass
 
 async def handle_non_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.chat_data['count'] = 0
@@ -59,7 +61,7 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("count", get_count))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    application.add_handler(MessageHandler(~filters.TEXT & ~filters.StatusUpdate.ALL, handle_non_text_message))
+    # application.add_handler(MessageHandler(~filters.TEXT & ~filters.StatusUpdate.ALL, handle_non_text_message))
     application.add_handler(MessageHandler(filters.StatusUpdate.MIGRATE, chat_migration))
 
     # Start the bot
