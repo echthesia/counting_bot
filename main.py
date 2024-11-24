@@ -85,7 +85,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_non_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.chat_data['count'] = 0
-    await update.message.reply_text("That's not even <i>text!</i>. Count reset.", parse_mode=constants.ParseMode.HTML)
+    await update.message.reply_text("That's not even <i>text!</i>. Count reset.", parse_mode=ParseMode.HTML)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
