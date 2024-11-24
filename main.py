@@ -22,6 +22,17 @@ def parse_number(text: str) -> float | None:
     except ValueError:
         pass
     
+    # Check for mixed numeral systems
+    script = None
+    for char in text:
+        if script is None:
+            script = icu.Script.getScript(char)
+        elif icu.Script.getScript(char) != script:
+            return None
+        else:
+            continue
+        
+
     # Try ICU parsing with different locales
     for locale in locales:
         try:
