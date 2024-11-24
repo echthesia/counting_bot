@@ -46,7 +46,7 @@ def tokenize_expression(text: str) -> list[str]:
             current.append(char)
             is_numeric = char.isnumeric()
             continue
-        if char.isnumeric() != is_numeric:
+        elif char.isnumeric() != is_numeric:
             tokens.append(''.join(current))
             current = [char]
             is_numeric = char.isnumeric()
