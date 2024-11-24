@@ -7,41 +7,65 @@ import dotenv
 import os
 from telegram.constants import ParseMode
 import unicodedata
+import icu
+import re
 
 PUNCTUATION_FILTER = ''.join(c for c in string.punctuation if c not in '-.')
 
+def parse_number(text: str) -> float | None:
+    """Parse number string using multiple numeral systems."""
+    # Locales with different numeral systems
+    locales = ['en_US', 'zh', 'ar', 'fa', 'bn', 'hi', 'th', 'ta', 'am', 'ti', 'my', 'km', 'lo', 'gu', 'pa']
+    
+    # Try direct float conversion first
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    
+    # Try ICU parsing with different locales
+    for locale in locales:
+        try:
+            num_fmt = icu.NumberFormat.createInstance(icu.Locale(locale))
+            parsed = num_fmt.parse(text)
+            if parsed is not None:
+                return float(parsed)
+        except Exception:
+            continue
+
+    return None
+
+def tokenize_expression(text: str) -> list[str]:
+    """Split text into numeric and non-numeric tokens."""
+    # Pattern matches any sequence of Unicode numeric characters (N* category) with optional decimal points
+    # or sequences of non-numeric characters
+    return re.findall(r'[\p{N}.]+|[^\p{N}.]+', text, re.UNICODE)
+
 def normalize_numeric_text(text: str) -> str:
     """Normalize unicode numbers and fractions to standard ASCII digits."""
-    # Common unicode fractions and their decimal equivalents
-    FRACTION_MAP = {
-        '½': '0.5', '⅓': '0.333', '⅔': '0.666',
-        '¼': '0.25', '¾': '0.75', '⅕': '0.2',
-        '⅖': '0.4', '⅗': '0.6', '⅘': '0.8',
-        '⅙': '0.166', '⅚': '0.833', '⅐': '0.142',
-        '⅛': '0.125', '⅜': '0.375', '⅝': '0.625',
-        '⅞': '0.875', '⅑': '0.111', '⅒': '0.1'
-    }
-    
-    # Replace special number characters
-    NUMBER_MAP = {
-        '０': '0', '１': '1', '２': '2', '３': '3', '４': '4',
-        '５': '5', '６': '6', '７': '7', '８': '8', '９': '9',
-        '𝟎': '0', '𝟏': '1', '𝟐': '2', '𝟑': '3', '𝟒': '4',
-        '𝟓': '5', '𝟔': '6', '𝟕': '7', '𝟖': '8', '𝟗': '9'
-    }
-
-    # Normalize unicode characters
     text = unicodedata.normalize('NFKD', text)
+
+    # Try direct float conversion first - most input will be normal!
+    try:
+        return float(text)
+    except ValueError:
+        pass
+
+    # Someone tried something weird. Let's try to parse it.
+    tokens = tokenize_expression(text)
     
-    # Replace fractions
-    for fraction, decimal in FRACTION_MAP.items():
-        text = text.replace(fraction, decimal)
-    
-    # Replace special number characters
-    for special, normal in NUMBER_MAP.items():
-        text = text.replace(special, normal)
-    
-    return text
+    result = []
+    for token in tokens:
+        if token.isnumeric():
+            parsed = parse_number(token)
+            if parsed is not None:
+                result.append(str(parsed))
+            else:
+                raise ValueError("bad_numeric_input")
+        else:
+            result.append(token)
+            
+    return ''.join(result)
 
 # Enable logging
 logging.basicConfig(
@@ -57,7 +81,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         text = normalize_numeric_text(message.text.strip())
-        
+    except ValueError as e:
+        if e == "bad_numeric_input":
+            await message.reply_text("What kind of number is that? Try again.")
+
+    try:
         # Try to evaluate as mathematical expression first
         try:
             number = ne.evaluate(text)
