@@ -8,7 +8,6 @@ import os
 from telegram.constants import ParseMode
 import unicodedata
 import icu
-import re
 
 PUNCTUATION_FILTER = ''.join(c for c in string.punctuation if c not in '-.')
 
