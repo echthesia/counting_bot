@@ -1,4 +1,4 @@
-import ast
+import numexpr as ne
 import logging
 import string
 from telegram import Update
@@ -9,16 +9,6 @@ from telegram.constants import ParseMode
 import unicodedata
 
 PUNCTUATION_FILTER = ''.join(c for c in string.punctuation if c not in '-.')
-
-def safe_eval(expr):
-    """Safely evaluate simple mathematical expressions."""
-    try:
-        # Convert common mathematical notation
-        expr = expr.replace('×', '*').replace('÷', '/')
-        # Parse and evaluate expression
-        return float(ast.literal_eval(expr))
-    except (ValueError, SyntaxError, TypeError):
-        return None
 
 def normalize_numeric_text(text: str) -> str:
     """Normalize unicode numbers and fractions to standard ASCII digits."""
@@ -69,8 +59,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = normalize_numeric_text(message.text.strip())
         
         # Try to evaluate as mathematical expression first
-        number = safe_eval(text)
-        
+        try:
+            number = ne.evaluate(text)
+        except (ValueError, SyntaxError, TypeError):
+            number = None
+            
         # If not an expression, try direct conversion
         if number is None:
             # Keep negative signs and decimal points
@@ -87,7 +80,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.chat_data['count'] = 0
             await message.reply_text(f"Incorrect! The next number was {current_count + 1}. Count reset.")
             
-    except (ValueError, SyntaxError, TypeError):
+    except ValueError:
         pass
 
 async def handle_non_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
