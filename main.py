@@ -15,7 +15,7 @@ PUNCTUATION_FILTER = ''.join(c for c in string.punctuation if c not in '-.')
 def parse_number(text: str) -> float | None:
     """Parse number string using multiple numeral systems."""
     # Locales with different numeral systems
-    locales = ['en_US', 'zh', 'ar', 'fa', 'bn', 'hi', 'th', 'ta', 'am', 'ti', 'my', 'km', 'lo', 'gu', 'pa']
+    locales = ['zh-u-nu-traditio', 'ar', 'fa', 'bn', 'hi-u-nu-traditio', 'th-u-nu-traditio', 'ta-u-nu-traditio', 'am-u-nu-traditio', 'ti-u-nu-traditio', 'my', 'km-u-nu-traditio', 'lo-u-nu-traditio', 'gu-u-nu-traditio', 'pa-u-nu-traditio']
     
     # Try direct float conversion first
     try:
@@ -39,7 +39,7 @@ def tokenize_expression(text: str) -> list[str]:
     """Split text into numeric and non-numeric tokens."""
     # Pattern matches any sequence of Unicode numeric characters (N* category) with optional decimal points
     # or sequences of non-numeric characters
-    return re.findall(r'[\p{N}.]+|[^\p{N}.]+', text, re.UNICODE)
+    return re.findall(r'[\\p{N}.]+|[^\\p{N}.]+', text, re.UNICODE)
 
 def normalize_numeric_text(text: str) -> str:
     """Normalize unicode numbers and fractions to standard ASCII digits."""
@@ -77,15 +77,10 @@ logger = logging.getLogger(__name__)
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle incoming messages and verify if they follow the counting sequence."""
     message = update.message
-    current_count = context.chat_data.get('count', 0)
-    
-    try:
-        text = normalize_numeric_text(message.text.strip())
-    except ValueError as e:
-        if e == "bad_numeric_input":
-            await message.reply_text("What kind of number is that? Try again.")
+    current_count = context.chat_data.get('count', 0)        
 
     try:
+        text = normalize_numeric_text(message.text.strip())
         # Try to evaluate as mathematical expression first
         try:
             number = ne.evaluate(text)
@@ -108,8 +103,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.chat_data['count'] = 0
             await message.reply_text(f"Incorrect! The next number was {current_count + 1}. Count reset.")
             
-    except ValueError:
-        pass
+    except ValueError as e:
+        if e.args[0] == "bad_numeric_input":
+            await message.reply_text("What kind of number is that? Try again.")
+            return
 
 async def handle_non_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.chat_data['count'] = 0
