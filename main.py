@@ -27,7 +27,7 @@ def parse_number(text: str) -> float | None:
     for locale in locales:
         try:
             num_fmt = icu.NumberFormat.createInstance(icu.Locale(locale))
-            parsed = num_fmt.parse(text)
+            parsed = num_fmt.parse(text).getDouble()
             if parsed is not None:
                 return float(parsed)
         except Exception:
@@ -37,9 +37,28 @@ def parse_number(text: str) -> float | None:
 
 def tokenize_expression(text: str) -> list[str]:
     """Split text into numeric and non-numeric tokens."""
-    # Pattern matches any sequence of Unicode numeric characters (N* category) with optional decimal points
-    # or sequences of non-numeric characters
-    return re.findall(r'[\\p{N}.]+|[^\\p{N}.]+', text, re.UNICODE)
+    tokens = []
+    current = []
+    is_numeric = False
+
+    for char in text:
+        if not current:
+            current.append(char)
+            is_numeric = char.isnumeric()
+            continue
+        if char.isnumeric() != is_numeric:
+            tokens.append(''.join(current))
+            current = [char]
+            is_numeric = char.isnumeric()
+        else:
+            current.append(char)
+    
+    if current:
+        tokens.append(''.join(current))
+    
+    return tokens
+
+
 
 def normalize_numeric_text(text: str) -> str:
     """Normalize unicode numbers and fractions to standard ASCII digits."""
@@ -47,7 +66,8 @@ def normalize_numeric_text(text: str) -> str:
 
     # Try direct float conversion first - most input will be normal!
     try:
-        return float(text)
+        float(text)
+        return text
     except ValueError:
         pass
 
@@ -94,7 +114,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             number = float(cleaned)
 
         if number == current_count + 1:
-            context.chat_data['count'] = number
+            context.chat_data['count'] += 1
             if number == 69:
                 await message.reply_text("nice")
             elif number == 420:
