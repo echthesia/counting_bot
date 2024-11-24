@@ -58,8 +58,6 @@ def tokenize_expression(text: str) -> list[str]:
     
     return tokens
 
-
-
 def normalize_numeric_text(text: str) -> str:
     """Normalize unicode numbers and fractions to standard ASCII digits."""
     text = unicodedata.normalize('NFKD', text)
