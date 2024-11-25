@@ -112,6 +112,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Try to evaluate as mathematical expression first
         try:
             number = ne.evaluate(text)
+            number = round(number, 12)
         except (ValueError, SyntaxError, TypeError):
             number = None
             
