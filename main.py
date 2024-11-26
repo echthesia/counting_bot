@@ -111,7 +111,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = normalize_numeric_text(message.text.strip())
         # Try to evaluate as mathematical expression first
         try:
-            number = ne.evaluate(text)
+            number = ne.evaluate(text).item()
             number = round(number, 12)
         except (ValueError, SyntaxError, TypeError):
             number = None
