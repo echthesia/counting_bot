@@ -124,6 +124,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if number == current_count + 1:
             context.chat_data['count'] += 1
+            await message.set_reaction('👍')
             if number == 69:
                 await message.reply_text("nice")
             elif number == 420:
